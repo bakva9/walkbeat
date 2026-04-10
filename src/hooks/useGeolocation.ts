@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react"
+import { Geolocation } from "@capacitor/geolocation"
 import type { GpsPoint } from "../types/walk"
 
 function haversine(
@@ -20,48 +21,64 @@ function haversine(
 
 export function useGeolocation(active: boolean) {
   const [points, setPoints] = useState<GpsPoint[]>([])
-  const watchIdRef = useRef<number | null>(null)
+  const watchIdRef = useRef<string | null>(null)
 
-  const addPoint = useCallback((position: GeolocationPosition) => {
+  const addPoint = useCallback((lat: number, lng: number, timestamp: number) => {
     setPoints((prev) => {
-      const now = position.timestamp
-      const lat = position.coords.latitude
-      const lng = position.coords.longitude
-
       let speed = 0
       if (prev.length > 0) {
         const last = prev[prev.length - 1]
         const dist = haversine(last.lat, last.lng, lat, lng) // km
-        const dt = (now - last.timestamp) / 3600000 // hours
+        const dt = (timestamp - last.timestamp) / 3600000 // hours
         if (dt > 0) speed = dist / dt // km/h
       }
 
-      return [...prev, { lat, lng, timestamp: now, speed }]
+      return [...prev, { lat, lng, timestamp, speed }]
     })
   }, [])
 
   useEffect(() => {
-    if (!active) {
-      if (watchIdRef.current !== null) {
-        navigator.geolocation.clearWatch(watchIdRef.current)
-        watchIdRef.current = null
+    if (!active) return
+
+    let cancelled = false
+
+    const startWatching = async () => {
+      try {
+        const permission = await Geolocation.requestPermissions()
+        if (permission.location !== "granted") {
+          console.error("Location permission denied")
+          return
+        }
+
+        const id = await Geolocation.watchPosition(
+          { enableHighAccuracy: true, timeout: 10000 },
+          (position, err) => {
+            if (cancelled) return
+            if (err) {
+              console.error("GPS error:", err)
+              return
+            }
+            if (position) {
+              addPoint(
+                position.coords.latitude,
+                position.coords.longitude,
+                position.timestamp
+              )
+            }
+          }
+        )
+        watchIdRef.current = id
+      } catch (err) {
+        console.error("Failed to start watching position:", err)
       }
-      return
     }
 
-    watchIdRef.current = navigator.geolocation.watchPosition(
-      addPoint,
-      (err) => console.error("GPS error:", err),
-      {
-        enableHighAccuracy: true,
-        maximumAge: 0,
-        timeout: 10000,
-      }
-    )
+    startWatching()
 
     return () => {
+      cancelled = true
       if (watchIdRef.current !== null) {
-        navigator.geolocation.clearWatch(watchIdRef.current)
+        Geolocation.clearWatch({ id: watchIdRef.current })
         watchIdRef.current = null
       }
     }
