@@ -13,13 +13,24 @@ function formatDuration(seconds: number): string {
   return `${m}分${s > 0 ? `${s}秒` : ""}`
 }
 
+function formatClock(seconds: number): string {
+  const m = Math.floor(seconds / 60)
+  const s = Math.floor(seconds % 60)
+  return `${m}:${String(s).padStart(2, "0")}`
+}
+
 export function ResultScreen({ walk, onHome }: Props) {
-  const { isPlaying, toggle, noteCount } = useMusicPlayer(walk.points)
+  const { isPlaying, toggle, noteCount, notes, currentPointIndex, progress, totalDuration } =
+    useMusicPlayer(walk.points)
 
   return (
     <div className="min-h-svh bg-gray-950 text-white flex flex-col">
       <div className="h-64">
-        <RouteMap points={walk.points} />
+        <RouteMap
+          points={walk.points}
+          notes={notes}
+          highlightIndex={currentPointIndex}
+        />
       </div>
 
       <div className="flex-1 p-6 space-y-6">
@@ -60,9 +71,23 @@ export function ResultScreen({ walk, onHome }: Props) {
               </svg>
             )}
           </button>
-          <span className="text-sm text-gray-500">
-            {noteCount > 0 ? `${noteCount} notes` : "データが足りません"}
-          </span>
+          {isPlaying && totalDuration > 0 ? (
+            <div className="w-full max-w-xs flex flex-col items-center gap-1">
+              <div className="h-1 w-full bg-gray-800 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-amber-400"
+                  style={{ width: `${progress * 100}%` }}
+                />
+              </div>
+              <span className="text-xs text-gray-500 font-mono">
+                {formatClock(progress * totalDuration)} / {formatClock(totalDuration)}
+              </span>
+            </div>
+          ) : (
+            <span className="text-sm text-gray-500">
+              {noteCount > 0 ? `${noteCount} notes` : "データが足りません"}
+            </span>
+          )}
         </div>
 
         <button

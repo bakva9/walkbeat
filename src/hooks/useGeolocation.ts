@@ -1,6 +1,45 @@
 import { useState, useEffect, useRef, useCallback } from "react"
+import { Capacitor, registerPlugin } from "@capacitor/core"
 import { Geolocation } from "@capacitor/geolocation"
 import type { GpsPoint } from "../types/walk"
+
+interface BackgroundLocation {
+  latitude: number
+  longitude: number
+  accuracy: number
+  altitude: number | null
+  altitudeAccuracy: number | null
+  simulated: boolean
+  speed: number | null
+  bearing: number | null
+  time: number | null
+}
+
+interface BackgroundCallbackError {
+  code: string
+  message: string
+}
+
+interface BackgroundGeolocationPlugin {
+  addWatcher(
+    options: {
+      backgroundMessage?: string
+      backgroundTitle?: string
+      requestPermissions?: boolean
+      stale?: boolean
+      distanceFilter?: number
+    },
+    callback: (
+      location?: BackgroundLocation,
+      error?: BackgroundCallbackError
+    ) => void
+  ): Promise<string>
+  removeWatcher(options: { id: string }): Promise<void>
+}
+
+const BackgroundGeolocation = registerPlugin<BackgroundGeolocationPlugin>(
+  "BackgroundGeolocation"
+)
 
 function haversine(
   lat1: number,
@@ -41,8 +80,40 @@ export function useGeolocation(active: boolean) {
     if (!active) return
 
     let cancelled = false
+    const isNative = Capacitor.isNativePlatform()
 
-    const startWatching = async () => {
+    const startNative = async () => {
+      try {
+        const id = await BackgroundGeolocation.addWatcher(
+          {
+            backgroundTitle: "WalkBeat",
+            backgroundMessage: "散歩を記録中",
+            requestPermissions: true,
+            stale: false,
+            distanceFilter: 5,
+          },
+          (location, error) => {
+            if (cancelled) return
+            if (error) {
+              console.error("BG GPS error:", error)
+              return
+            }
+            if (location) {
+              addPoint(
+                location.latitude,
+                location.longitude,
+                location.time ?? Date.now()
+              )
+            }
+          }
+        )
+        watchIdRef.current = id
+      } catch (err) {
+        console.error("Failed to start BG watcher:", err)
+      }
+    }
+
+    const startWeb = async () => {
       try {
         const permission = await Geolocation.requestPermissions()
         if (permission.location !== "granted") {
@@ -73,12 +144,20 @@ export function useGeolocation(active: boolean) {
       }
     }
 
-    startWatching()
+    if (isNative) {
+      startNative()
+    } else {
+      startWeb()
+    }
 
     return () => {
       cancelled = true
       if (watchIdRef.current !== null) {
-        Geolocation.clearWatch({ id: watchIdRef.current })
+        if (isNative) {
+          BackgroundGeolocation.removeWatcher({ id: watchIdRef.current })
+        } else {
+          Geolocation.clearWatch({ id: watchIdRef.current })
+        }
         watchIdRef.current = null
       }
     }

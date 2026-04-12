@@ -14,7 +14,17 @@ function formatTime(seconds: number): string {
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`
 }
 
+function formatClock(timestamp: number): string {
+  const d = new Date(timestamp)
+  const hh = String(d.getHours()).padStart(2, "0")
+  const mm = String(d.getMinutes()).padStart(2, "0")
+  const ss = String(d.getSeconds()).padStart(2, "0")
+  return `${hh}:${mm}:${ss}`
+}
+
 export function WalkingScreen({ points, elapsed, distance, onStop }: Props) {
+  const lastTimestamp = points.length > 0 ? points[points.length - 1].timestamp : null
+
   return (
     <div className="h-svh bg-gray-950 text-white flex flex-col">
       <div className="flex-1 relative">
@@ -35,6 +45,16 @@ export function WalkingScreen({ points, elapsed, distance, onStop }: Props) {
             </div>
             <div className="text-sm text-gray-400">km</div>
           </div>
+          <div>
+            <div className="text-3xl font-mono font-bold">
+              {points.length}
+            </div>
+            <div className="text-sm text-gray-400">ポイント</div>
+          </div>
+        </div>
+
+        <div className="text-center text-xs text-gray-500 font-mono">
+          最終更新: {lastTimestamp ? formatClock(lastTimestamp) : "—"}
         </div>
 
         <button

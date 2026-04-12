@@ -22,3 +22,19 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Secrets / API keys
+.env
+.env.local
+.env.*.local
+
+# Android signing (keystore and passwords must never be committed)
+*.keystore
+*.jks
+keystore.properties
+android/keystore.properties
+android/app/keystore.properties
+key.properties
+
+# Generated icon/splash source assets (optional - keep final PNGs but not intermediate)
+resources/.cache/

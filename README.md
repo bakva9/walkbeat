@@ -1,73 +1,60 @@
-# React + TypeScript + Vite
+# WalkBeat
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+散歩が音楽になるアプリ。歩いたルートから自動でメロディが生成される。
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- GPS ログからペンタトニックスケールのメロディを自動生成
+- 速度・加速度・曲率に応じたリズムと表現の変化
+- セクション分析による伴奏の自動生成（Calm / Walk / Active / Break）
+- 散歩中のリアルタイム軌跡表示
+- 散歩履歴の保存と再生
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- React + Vite + Tailwind CSS
+- Capacitor (Android native)
+- Web Audio API
+- Leaflet + OpenStreetMap
 
-## Expanding the ESLint configuration
+## Android APK Install
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Download
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+[Latest release](https://github.com/bakva9/walkbeat/releases/latest) から APK をダウンロード。
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### Install steps
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+1. ダウンロードした `.apk` ファイルを開く
+2. 「この提供元のアプリを許可」を ON にする
+   - 設定 → アプリ → 特別なアクセス → 不明なアプリのインストール → ブラウザ（またはファイルマネージャー）→ 許可
+3. インストールをタップ
+4. Google Play Protect の警告が出たら「インストールする」を選択
+5. 初回起動時に位置情報の許可を求められるので「アプリの使用中のみ許可」を選択
+   - バックグラウンド GPS を使う場合は「常に許可」
+
+### Troubleshooting
+
+| 問題 | 対処 |
+|---|---|
+| 「インストールがブロックされました」 | 設定 → 不明なアプリのインストール を確認 |
+| Play Protect 警告 | 「詳細」→「インストールする」で続行 |
+| 位置情報が取得できない | 端末の位置情報サービスが ON か確認 |
+| 音が鳴らない | メディア音量が 0 でないか確認。結果画面で再生ボタンをタップ |
+
+## Development
+
+```bash
+npm install
+npm run dev          # dev server
+npm run build        # production build
+npx cap sync android # sync to Android
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Privacy
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+[Privacy Policy](PRIVACY.md)
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## License
+
+MIT
