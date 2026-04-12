@@ -86,7 +86,7 @@ export function useGeolocation(active: boolean) {
       try {
         const id = await BackgroundGeolocation.addWatcher(
           {
-            backgroundTitle: "WalkBeat",
+            backgroundTitle: "ASHIOTO",
             backgroundMessage: "散歩を記録中",
             requestPermissions: true,
             stale: false,
