@@ -2,6 +2,7 @@ import type { GpsPoint } from "../types/walk"
 import { hashToNote } from "./hashToNote"
 import { shapeToRhythm } from "./shapeToRhythm"
 import { calculateCurvature, quantizeCurvature } from "./curvature"
+import { tension } from "./tensionCurve"
 
 export type MusicNote = {
   frequency: number
@@ -77,8 +78,22 @@ export function generateMusic(points: GpsPoint[]): MusicNote[] {
     if (!rhythm.isRest && rhythm.duration > 0) {
       const compressedDuration = rhythm.duration * compressionRatio
 
-      // Low curvature: thin out (play every other note)
-      const shouldThin = curvatureBand === "low" && lowCurvatureRun % 2 === 0
+      // Tension curve: scale velocity and density by song position
+      const totalCompressedDuration = totalRawDuration * compressionRatio
+      const progress =
+        totalCompressedDuration > 0 ? rawTime / totalCompressedDuration : 0
+      const t = tension(progress)
+
+      // Low curvature: thin out — less thinning at high tension
+      const thinMod = t < 0.4 ? 3 : 2 // low tension: keep 1 in 3, else 1 in 2
+      const shouldThin =
+        curvatureBand === "low" && lowCurvatureRun % thinMod !== 0
+
+      // Apply tension scaling to velocity (0.79x – 0.91x range)
+      const tensionVelocity = Math.max(
+        0.3,
+        Math.min(1.0, rhythm.velocity * (0.7 + t * 0.3))
+      )
 
       if (!shouldThin) {
         notes.push({
@@ -86,7 +101,7 @@ export function generateMusic(points: GpsPoint[]): MusicNote[] {
           noteIndex: noteEvent.noteIndex,
           startTime: rawTime,
           duration: compressedDuration,
-          velocity: rhythm.velocity,
+          velocity: tensionVelocity,
           pointIndex: i,
         })
 
@@ -111,7 +126,7 @@ export function generateMusic(points: GpsPoint[]): MusicNote[] {
               noteIndex: clampedIndex,
               startTime: rawTime + compressedDuration * 0.5,
               duration: compressedDuration * 0.5,
-              velocity: rhythm.velocity * 0.8,
+              velocity: tensionVelocity * 0.8,
               pointIndex: i,
             })
           }

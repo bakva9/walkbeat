@@ -1,5 +1,6 @@
 import type { MusicNote } from "./generateMusic"
 import type { SectionInfo } from "./sectionAnalyzer"
+import { tension } from "./tensionCurve"
 
 let audioContext: AudioContext | null = null
 let delayNode: DelayNode | null = null
@@ -111,7 +112,8 @@ function scheduleAccompanimentSection(
   section: SectionInfo,
   offset: number,
   prevPattern: string | null,
-  nextPattern: string | null
+  nextPattern: string | null,
+  totalDuration: number
 ) {
   const patternDef = PATTERNS[section.pattern]
   if (!patternDef) return // break = silence
@@ -122,6 +124,14 @@ function scheduleAccompanimentSection(
 
   if (sectionDuration <= 0) return
 
+  // Tension scaling for accompaniment volume
+  const sectionMidProgress =
+    totalDuration > 0
+      ? (section.startTime + section.endTime) / 2 / totalDuration
+      : 0.5
+  const t = tension(sectionMidProgress)
+  const tensionScale = 0.5 + t // 0.8x – 1.2x range
+
   if (patternDef.interval === 0) {
     // Drone pattern (calm): one long oscillator for the section
     const osc = ctx.createOscillator()
@@ -130,8 +140,8 @@ function scheduleAccompanimentSection(
     osc.type = "sine"
     osc.frequency.value = patternDef.frequencies[0]
 
-    // Base volume with crossfade
-    const vol = patternDef.volume
+    // Base volume with crossfade + tension
+    const vol = patternDef.volume * tensionScale
 
     // Fade in at section boundary
     if (prevPattern !== section.pattern) {
@@ -166,7 +176,7 @@ function scheduleAccompanimentSection(
     const freqs = patternDef.frequencies
     const interval = patternDef.interval
     const noteDur = patternDef.noteDuration
-    const vol = patternDef.volume
+    const vol = patternDef.volume * tensionScale
 
     // Crossfade: determine effective start/end with volume ramps
     const effectiveStart = prevPattern !== section.pattern
@@ -174,10 +184,10 @@ function scheduleAccompanimentSection(
       : sectionStart
     const effectiveEnd = sectionEnd
 
-    let t = effectiveStart
+    let cursor = effectiveStart
     let noteIdx = 0
 
-    while (t + noteDur <= effectiveEnd) {
+    while (cursor + noteDur <= effectiveEnd) {
       const freq = freqs[noteIdx % freqs.length]
       const osc = ctx.createOscillator()
       const gain = ctx.createGain()
@@ -186,8 +196,8 @@ function scheduleAccompanimentSection(
       osc.frequency.value = freq
 
       // Calculate volume with crossfade envelope
-      const elapsed = t - sectionStart
-      const remaining = sectionEnd - t
+      const elapsed = cursor - sectionStart
+      const remaining = sectionEnd - cursor
       let noteVol = vol
 
       // Fade in
@@ -200,19 +210,19 @@ function scheduleAccompanimentSection(
       }
 
       // Simple envelope for each accompaniment note
-      gain.gain.setValueAtTime(0, t)
-      gain.gain.linearRampToValueAtTime(noteVol, t + 0.005)
-      gain.gain.setValueAtTime(noteVol, t + noteDur - 0.01)
-      gain.gain.linearRampToValueAtTime(0, t + noteDur)
+      gain.gain.setValueAtTime(0, cursor)
+      gain.gain.linearRampToValueAtTime(noteVol, cursor + 0.005)
+      gain.gain.setValueAtTime(noteVol, cursor + noteDur - 0.01)
+      gain.gain.linearRampToValueAtTime(0, cursor + noteDur)
 
       osc.connect(gain)
       gain.connect(masterGain!)
 
-      osc.start(t)
-      osc.stop(t + noteDur + 0.05)
+      osc.start(cursor)
+      osc.stop(cursor + noteDur + 0.05)
       accompanimentSources.push(osc)
 
-      t += interval
+      cursor += interval
       noteIdx++
     }
   }
@@ -221,14 +231,22 @@ function scheduleAccompanimentSection(
 function playAccompaniment(
   ctx: AudioContext,
   sections: SectionInfo[],
-  offset: number
+  offset: number,
+  totalDuration: number
 ) {
   stopAccompaniment()
 
   for (let i = 0; i < sections.length; i++) {
     const prevPattern = i > 0 ? sections[i - 1].pattern : null
     const nextPattern = i < sections.length - 1 ? sections[i + 1].pattern : null
-    scheduleAccompanimentSection(ctx, sections[i], offset, prevPattern, nextPattern)
+    scheduleAccompanimentSection(
+      ctx,
+      sections[i],
+      offset,
+      prevPattern,
+      nextPattern,
+      totalDuration
+    )
   }
 }
 
@@ -261,15 +279,21 @@ export function playSequence(
     playNote(ctx, note, offset)
   }
 
+  const duration =
+    notes.length > 0
+      ? notes[notes.length - 1].startTime +
+        notes[notes.length - 1].duration +
+        0.3
+      : 0
+
   // Accompaniment (Layer 3)
   if (sections && sections.length > 0) {
-    playAccompaniment(ctx, sections, offset)
+    playAccompaniment(ctx, sections, offset, duration)
   }
 
   if (notes.length === 0) return { duration: 0, startedAt: offset }
-  const last = notes[notes.length - 1]
   return {
-    duration: last.startTime + last.duration + 0.3,
+    duration,
     startedAt: offset,
   }
 }
