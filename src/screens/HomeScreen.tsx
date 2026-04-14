@@ -10,7 +10,7 @@ export function HomeScreen({ walks, onStart, onSelectWalk }: Props) {
   return (
     <div className="min-h-svh bg-gray-950 text-white flex flex-col">
       <div className="flex-1 flex flex-col items-center justify-center gap-8 p-6">
-        <h1 className="text-4xl font-bold tracking-tight">WalkBeat</h1>
+        <h1 className="text-4xl font-bold tracking-tight">ASHIOTO</h1>
         <p className="text-gray-400 text-center">散歩が音楽になる</p>
         <button
           onClick={onStart}

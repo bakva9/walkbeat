@@ -1,10 +1,10 @@
-# Privacy Policy — WalkBeat
+# Privacy Policy — ASHIOTO
 
 Last updated: 2026-04-12
 
-## What data does WalkBeat collect?
+## What data does ASHIOTO collect?
 
-WalkBeat collects GPS location data (latitude, longitude, speed, timestamp) **only while you are actively recording a walk**.
+ASHIOTO collects GPS location data (latitude, longitude, speed, timestamp) **only while you are actively recording a walk**.
 
 ## How is the data used?
 
@@ -12,15 +12,15 @@ Location data is used solely to generate music from your walking route. The app 
 
 ## Where is the data stored?
 
-All data is stored **locally on your device** using the browser's localStorage. WalkBeat does not have a server, database, or any cloud storage. Your data never leaves your device.
+All data is stored **locally on your device** using the browser's localStorage. ASHIOTO does not have a server, database, or any cloud storage. Your data never leaves your device.
 
-## Does WalkBeat share data with third parties?
+## Does ASHIOTO share data with third parties?
 
-No. WalkBeat does not transmit any data to any server, third party, or analytics service.
+No. ASHIOTO does not transmit any data to any server, third party, or analytics service.
 
 ## Map tiles
 
-WalkBeat displays maps using OpenStreetMap via Leaflet. When viewing the map, your device downloads map tile images from OpenStreetMap's servers. This is a standard HTTP request and is subject to [OpenStreetMap's privacy policy](https://wiki.osmfoundation.org/wiki/Privacy_Policy).
+ASHIOTO displays maps using OpenStreetMap via Leaflet. When viewing the map, your device downloads map tile images from OpenStreetMap's servers. This is a standard HTTP request and is subject to [OpenStreetMap's privacy policy](https://wiki.osmfoundation.org/wiki/Privacy_Policy).
 
 ## Permissions
 
@@ -38,4 +38,4 @@ All walk data is stored in localStorage. You can delete it at any time by:
 
 ## Contact
 
-If you have questions about this privacy policy, open an issue at: https://github.com/bakva9/walkbeat/issues
+If you have questions about this privacy policy, open an issue at: https://github.com/bakva9/ASHIOTO/issues

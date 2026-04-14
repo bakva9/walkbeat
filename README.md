@@ -1,4 +1,4 @@
-# WalkBeat
+# ASHIOTO
 
 散歩が音楽になるアプリ。歩いたルートから自動でメロディが生成される。
 
@@ -21,7 +21,7 @@
 
 ### Download
 
-[Latest release](https://github.com/bakva9/walkbeat/releases/latest) から APK をダウンロード。
+[Latest release](https://github.com/bakva9/ASHIOTO/releases/latest) から APK をダウンロード。
 
 ### Install steps
 
